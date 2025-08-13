@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de GrapeIQ</title>
+  <!-- Enlace a la CDN de Tailwind CSS para un estilo moderno y responsivo -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Enlace a Google Fonts para una tipografía clásica con serifa -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Enlace a la CDN de Font Awesome para los íconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9641H0XWf5aHhN3S9zDqI7zR6X6W6j5/7gT5R7o+pE6K3T2Gg6G8kR5D6P6Gg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Incluye Chart.js para la visualización de datos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    /* Estilos personalizados para el scrollbar para mantener la estética */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #F5F5DC;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #795548;
+        border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #640E1B;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-[#F5F5DC] to-[#795548] text-[#4A0C2B] font-['Merriweather'] min-h-screen p-8 flex flex-col items-center justify-center">
+  
+  <!-- Contenedor del login, inicialmente visible -->
+  <div id="login-container" class="bg-white bg-opacity-90 rounded-xl shadow-lg p-8 w-full max-w-md mx-auto border border-[#795548]">
+    <h1 class="text-3xl font-bold text-[#4A0C2B] text-center mb-6">Iniciar Sesión en GrapeIQ</h1>
+    <form id="login-form" class="space-y-4">
+      <div>
+        <label for="username" class="block text-sm font-medium text-[#4A0C2B]">Usuario</label>
+        <input type="text" id="username" name="username" value="admin" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#640E1B] focus:ring-[#640E1B] sm:text-sm p-2">
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium text-[#4A0C2B]">Contraseña</label>
+        <input type="password" id="password" name="password" value="password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#640E1B] focus:ring-[#640E1B] sm:text-sm p-2">
+      </div>
+      <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-bold text-white bg-[#640E1B] hover:bg-[#4A0C2B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#640E1B] transition-colors duration-200">
+        Iniciar Sesión
+      </button>
+      <p id="error-message" class="text-red-600 text-center text-sm mt-2 hidden font-sans">Credenciales incorrectas.</p>
+    </form>
+  </div>
+
+  <!-- Contenedor del dashboard, inicialmente oculto -->
+  <div id="dashboard-container" class="container mx-auto hidden mt-8">
+    <h1 class="text-4xl md:text-5xl font-bold text-[#4A0C2B] text-center mb-12">Dashboard de Gestión de Viñedo</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+      <!-- Sección para las ventas totales -->
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 flex flex-col items-center justify-center border border-[#795548]">
+        <i class="fa-solid fa-sack-dollar text-4xl text-[#640E1B] mb-2"></i>
+        <h2 class="text-xl md:text-2xl font-semibold text-[#4A0C2B]">Ventas Totales</h2>
+        <span id="total-sales" class="text-4xl font-bold text-[#640E1B] mt-2">Cargando...</span>
+      </div>
+
+      <!-- Sección para el inventario total -->
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 flex flex-col items-center justify-center border border-[#795548]">
+        <i class="fa-solid fa-wine-bottle text-4xl text-[#640E1B] mb-2"></i>
+        <h2 class="text-xl md:text-2xl font-semibold text-[#4A0C2B]">Inventario Total</h2>
+        <span id="total-inventory" class="text-4xl font-bold text-[#640E1B] mt-2">Cargando...</span>
+      </div>
+      
+      <!-- Sección para el valor total del inventario -->
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 flex flex-col items-center justify-center border border-[#795548]">
+        <i class="fa-solid fa-money-bill-wave text-4xl text-[#640E1B] mb-2"></i>
+        <h2 class="text-xl md:text-2xl font-semibold text-[#4A0C2B]">Valor Inventario</h2>
+        <span id="total-inventory-value" class="text-4xl font-bold text-[#640E1B] mt-2">Cargando...</span>
+      </div>
+    </div>
+    
+    <!-- Contenedor para los gráficos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <!-- Sección para el gráfico de ventas por SKU -->
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+        <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] text-center mb-4">Análisis de Ventas por SKU</h2>
+        <div class="mt-4">
+          <canvas id="salesChart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Gráfico de ventas por canal -->
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+        <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] text-center mb-4">Ventas por Canal</h2>
+        <div class="mt-4">
+          <canvas id="salesByChannelChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Sección para Ventas -->
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+        <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] mb-4">Ventas</h2>
+        <ul id="sales-list" class="space-y-4 text-sm text-[#4A0C2B]">
+          <li class="flex items-center justify-center p-4 bg-gray-100 rounded-lg">Cargando datos de ventas...</li>
+        </ul>
+      </div>
+      
+      <!-- Sección para Productos -->
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+        <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] mb-4">Productos</h2>
+        <ul id="products-list" class="space-y-4 text-sm text-[#4A0C2B]">
+          <li class="flex items-center justify-center p-4 bg-gray-100 rounded-lg">Cargando datos de productos...</li>
+        </ul>
+      </div>
+      
+      <!-- Sección para Inventario -->
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+        <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] mb-4">Inventario</h2>
+        <ul id="inventory-list" class="space-y-4 text-sm text-[#4A0C2B]">
+          <li class="flex items-center justify-center p-4 bg-gray-100 rounded-lg">Cargando datos de inventario...</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ID del cliente (tenant) que queremos visualizar.
+    const TENANT_ID = "a1b2c3d4-e5f6-7890-1234-567890abcdef";
+    // URL base de la API.
+    const BASE_URL = "http://127.0.0.1:8000/api";
+
+    const loginForm = document.getElementById('login-form');
+    const loginContainer = document.getElementById('login-container');
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const errorMessage = document.getElementById('error-message');
+    
+    let accessToken = null;
+
+    // Colores de la paleta de viñedo para los gráficos
+    const viñedoColors = {
+        primary: '#640E1B', // Tinto oscuro
+        secondary: '#A52A2A', // Marrón rojizo
+        tertiary: '#795548', // Marrón claro
+        background: '#F5F5DC', // Pergamino
+    };
+
+    // Función para manejar el inicio de sesión.
+    async function login(username, password) {
+      const formData = new URLSearchParams();
+      formData.append('username', username);
+      formData.append('password', password);
+
+      try {
+        const response = await fetch(`${BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('Credenciales incorrectas');
+        }
+
+        const data = await response.json();
+        accessToken = data.access_token;
+        
+        // Oculta el formulario de login y muestra el dashboard.
+        loginContainer.classList.add('hidden');
+        dashboardContainer.classList.remove('hidden');
+
+        // Carga los datos del dashboard.
+        fetchData(accessToken);
+
+      } catch (error) {
+        console.error("Error al iniciar sesión:", error);
+        errorMessage.textContent = 'Credenciales incorrectas.';
+        errorMessage.classList.remove('hidden');
+      }
+    }
+
+    // Listener para el formulario de login.
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      login(username, password);
+    });
+
+    // Función para cargar y mostrar los datos del dashboard.
+    async function fetchData(token) {
+      const headers = {
+        'Authorization': `Bearer ${token}`
+      };
+
+      try {
+        const salesResponse = await fetch(`${BASE_URL}/data/sales/${TENANT_ID}`, { headers });
+        const productsResponse = await fetch(`${BASE_URL}/data/products/${TENANT_ID}`, { headers });
+        const inventoryResponse = await fetch(`${BASE_URL}/data/inventory/${TENANT_ID}`, { headers });
+        const totalSalesResponse = await fetch(`${BASE_URL}/data/analytics/total_sales/${TENANT_ID}`, { headers });
+        const totalInventoryResponse = await fetch(`${BASE_URL}/data/analytics/total_inventory/${TENANT_ID}`, { headers });
+        const salesByChannelResponse = await fetch(`${BASE_URL}/data/analytics/sales_by_channel/${TENANT_ID}`, { headers });
+        const totalInventoryValueResponse = await fetch(`${BASE_URL}/data/analytics/total_inventory_value/${TENANT_ID}`, { headers });
+
+        const salesData = (await salesResponse.json()).data;
+        const productsData = (await productsResponse.json()).data;
+        const inventoryData = (await inventoryResponse.json()).data;
+        const totalSalesData = await totalSalesResponse.json();
+        const totalInventoryData = await totalInventoryResponse.json();
+        const salesByChannelData = await salesByChannelResponse.json();
+        const totalInventoryValueData = await totalInventoryValueResponse.json();
+
+        // Muestra el total de ventas.
+        const totalSalesElement = document.getElementById('total-sales');
+        totalSalesElement.textContent = `${totalSalesData.total_sales.toFixed(2)} €`;
+        
+        // Muestra el total de inventario.
+        const totalInventoryElement = document.getElementById('total-inventory');
+        totalInventoryElement.textContent = `${totalInventoryData.total_inventory} unidades`;
+        
+        // Muestra el valor total del inventario.
+        const totalInventoryValueElement = document.getElementById('total-inventory-value');
+        totalInventoryValueElement.textContent = `${totalInventoryValueData.total_inventory_value.toFixed(2)} €`;
+
+        // Renderiza el gráfico de ventas por SKU.
+        renderSalesChart(salesData);
+        // Renderiza el gráfico de ventas por canal.
+        renderSalesByChannelChart(salesByChannelData.sales_by_channel);
+
+        // Muestra los datos de ventas en la lista.
+        const salesList = document.getElementById('sales-list');
+        salesList.innerHTML = '';
+        if (salesData.length > 0) {
+          salesData.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'bg-gray-100 rounded-lg p-4 shadow-sm';
+            li.innerHTML = `
+              <p><strong class="text-[#4A0C2B]">SKU:</strong> ${item.sku}</p>
+              <p><strong class="text-[#4A0C2B]">Cantidad:</strong> ${item.qty}</p>
+              <p><strong class="text-[#4A0C2B]">Precio:</strong> ${item.price} €</p>
+            `;
+            salesList.appendChild(li);
+          });
+        } else {
+          salesList.innerHTML = '<li class="p-4 text-center text-gray-500">No hay datos de ventas disponibles.</li>';
+        }
+
+        // Muestra los datos de productos en la lista.
+        const productsList = document.getElementById('products-list');
+        productsList.innerHTML = '';
+        if (productsData.length > 0) {
+          productsData.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'bg-gray-100 rounded-lg p-4 shadow-sm';
+            li.innerHTML = `
+              <p><strong class="text-[#4A0C2B]">SKU:</strong> ${item.sku}</p>
+              <p><strong class="text-[#4A0C2B]">Nombre:</strong> ${item.name}</p>
+              <p><strong class="text-[#4A0C2B]">Categoría:</strong> ${item.category}</p>
+            `;
+            productsList.appendChild(li);
+          });
+        } else {
+          productsList.innerHTML = '<li class="p-4 text-center text-gray-500">No hay datos de productos disponibles.</li>';
+        }
+
+        // Muestra los datos de inventario en la lista.
+        const inventoryList = document.getElementById('inventory-list');
+        inventoryList.innerHTML = '';
+        if (inventoryData.length > 0) {
+          inventoryData.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'bg-gray-100 rounded-lg p-4 shadow-sm';
+            li.innerHTML = `
+              <p><strong class="text-[#4A0C2B]">SKU:</strong> ${item.sku}</p>
+              <p><strong class="text-[#4A0C2B]">Cantidad:</strong> ${item.qty}</p>
+              <p><strong class="text-[#4A0C2B]">Ubicación:</strong> ${item.location}</p>
+            `;
+            inventoryList.appendChild(li);
+          });
+        } else {
+          inventoryList.innerHTML = '<li class="p-4 text-center text-gray-500">No hay datos de inventario disponibles.</li>';
+        }
+      } catch (error) {
+        console.error("Error al cargar los datos:", error);
+        document.getElementById('total-sales').textContent = 'Error';
+        document.getElementById('total-inventory').textContent = 'Error';
+        document.getElementById('total-inventory-value').textContent = 'Error';
+        document.getElementById('sales-list').innerHTML = '<li class="p-4 text-center text-red-600">Error al cargar datos.</li>';
+        document.getElementById('products-list').innerHTML = '<li class="p-4 text-center text-red-600">Error al cargar datos.</li>';
+        document.getElementById('inventory-list').innerHTML = '<li class="p-4 text-center text-red-600">Error al cargar datos.</li>';
+      }
+    }
+
+    function renderSalesChart(salesData) {
+      const salesBySku = salesData.reduce((acc, item) => {
+        acc[item.sku] = (acc[item.sku] || 0) + (item.qty * item.price);
+        return acc;
+      }, {});
+
+      const labels = Object.keys(salesBySku);
+      const data = Object.values(salesBySku);
+
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      if (window.salesChartInstance) {
+        window.salesChartInstance.destroy();
+      }
+      window.salesChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Ventas por SKU (€)',
+            data: data,
+            backgroundColor: viñedoColors.primary,
+            borderColor: viñedoColors.primary,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `Ventas: ${context.raw.toFixed(2)} €`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Ventas (€)',
+                color: viñedoColors.primary,
+              },
+              ticks: {
+                color: viñedoColors.primary,
+              },
+              grid: {
+                color: 'rgba(121, 85, 72, 0.3)',
+              }
+            },
+            x: {
+              ticks: {
+                color: viñedoColors.primary,
+              },
+              grid: {
+                color: 'rgba(121, 85, 72, 0.3)',
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function renderSalesByChannelChart(salesByChannelData) {
+      const labels = Object.keys(salesByChannelData);
+      const data = Object.values(salesByChannelData);
+
+      const ctx = document.getElementById('salesByChannelChart').getContext('2d');
+      if (window.salesByChannelChartInstance) {
+        window.salesByChannelChartInstance.destroy();
+      }
+      window.salesByChannelChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: [
+              viñedoColors.primary,
+              viñedoColors.secondary,
+            ],
+            hoverBackgroundColor: [
+              viñedoColors.primary,
+              viñedoColors.secondary,
+            ],
+            borderColor: '#F5F5DC',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: {
+                  size: 14,
+                  family: 'Merriweather'
+                },
+                color: viñedoColors.primary
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (context.parsed !== null) {
+                    label += context.parsed.toFixed(2) + ' €';
+                  }
+                  return label;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

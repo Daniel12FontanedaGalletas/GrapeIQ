@@ -1,0 +1,8 @@
+Excluye el archivo de variables de entorno para que no se suba a Git.
+.env
+
+Excluye las carpetas de Python que contienen dependencias y archivos compilados.
+pycache/
+*.pyc
+venv/
+.pytest_cache/
