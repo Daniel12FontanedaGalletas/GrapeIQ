@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de GrapeIQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9641H0XWf5aHhN3S9zDqI7zR6X6W6j5/7gT5R7o+pE6K3T2Gg6G8kR5D6P6Gg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    /* Estilos personalizados para el scrollbar para mantener la estética */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #F5F5DC;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #795548;
+        border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #640E1B;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-[#F5F5DC] to-[#795548] text-[#4A0C2B] font-['Merriweather'] min-h-screen p-8 flex flex-col items-center justify-center">
+  
+  <div id="login-container" class="bg-white bg-opacity-90 rounded-xl shadow-lg p-8 w-full max-w-md mx-auto border border-[#795548]">
+    <h1 class="text-3xl font-bold text-[#4A0C2B] text-center mb-6">Iniciar Sesión en GrapeIQ</h1>
+    <form id="login-form" class="space-y-4">
+      <div>
+        <label for="username" class="block text-sm font-medium text-[#4A0C2B]">Usuario</label>
+        <input type="text" id="username" name="username" value="admin" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#640E1B] focus:ring-[#640E1B] sm:text-sm p-2">
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium text-[#4A0C2B]">Contraseña</label>
+        <input type="password" id="password" name="password" value="password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#640E1B] focus:ring-[#640E1B] sm:text-sm p-2">
+      </div>
+      <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-bold text-white bg-[#640E1B] hover:bg-[#4A0C2B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#640E1B] transition-colors duration-200">
+        Iniciar Sesión
+      </button>
+      <p id="error-message" class="text-red-600 text-center text-sm mt-2 hidden font-sans">Credenciales incorrectas.</p>
+    </form>
+  </div>
+
+  <div id="dashboard-container" class="container mx-auto hidden mt-8">
+    <h1 class="text-4xl md:text-5xl font-bold text-[#4A0C2B] text-center mb-12">Dashboard de Gestión de Viñedo</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 flex flex-col items-center justify-center border border-[#795548]">
+        <i class="fa-solid fa-sack-dollar text-4xl text-[#640E1B] mb-2"></i>
+        <h2 class="text-xl md:text-2xl font-semibold text-[#4A0C2B]">Ventas Totales</h2>
+        <span id="total-sales" class="text-4xl font-bold text-[#640E1B] mt-2">Cargando...</span>
+      </div>
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 flex flex-col items-center justify-center border border-[#795548]">
+        <i class="fa-solid fa-wine-bottle text-4xl text-[#640E1B] mb-2"></i>
+        <h2 class="text-xl md:text-2xl font-semibold text-[#4A0C2B]">Inventario Total</h2>
+        <span id="total-inventory" class="text-4xl font-bold text-[#640E1B] mt-2">Cargando...</span>
+      </div>
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 flex flex-col items-center justify-center border border-[#795548]">
+        <i class="fa-solid fa-money-bill-wave text-4xl text-[#640E1B] mb-2"></i>
+        <h2 class="text-xl md:text-2xl font-semibold text-[#4A0C2B]">Valor Inventario</h2>
+        <span id="total-inventory-value" class="text-4xl font-bold text-[#640E1B] mt-2">Cargando...</span>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+        <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] text-center mb-4">Análisis de Ventas por SKU</h2>
+        <div class="mt-4" style="height: 350px;"><canvas id="salesChart"></canvas></div>
+      </div>
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+        <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] text-center mb-4">Ventas por Canal</h2>
+        <div class="mt-4" style="height: 350px;"><canvas id="salesByChannelChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 mb-8">
+        <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+            <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] text-center mb-4">
+                <i class="fa-solid fa-chart-line text-2xl text-[#640E1B] mr-2"></i>
+                Predicción de Demanda
+            </h2>
+            <div class="flex flex-wrap items-center justify-center gap-4 mb-4 p-2 bg-gray-100 rounded-lg">
+                <button id="btnRunForecast" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-[#640E1B] hover:bg-[#4A0C2B] transition-colors">
+                    <i class="fa-solid fa-cogs mr-2"></i>
+                    Generar Predicción
+                </button>
+                <input type="text" id="skuFilter" placeholder="Filtrar por SKU (opcional)" class="rounded-md border-gray-300 shadow-sm focus:border-[#640E1B] focus:ring-[#640E1B] sm:text-sm p-2">
+                <div class="flex items-center gap-2">
+                    <input type="file" id="datasetFile" class="text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#A52A2A] file:text-white hover:file:bg-[#640E1B]">
+                    <button id="btnUploadForecast" class="py-2 px-4 rounded-md shadow-sm text-sm font-bold text-white bg-gray-600 hover:bg-gray-800 transition-colors">
+                        <i class="fa-solid fa-upload mr-2"></i>
+                        Subir
+                    </button>
+                </div>
+            </div>
+            <div class="mt-4" style="height: 400px;">
+                <canvas id="forecastChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+        <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] mb-4">Ventas</h2>
+        <ul id="sales-list" class="space-y-4 text-sm text-[#4A0C2B] max-h-96 overflow-y-auto">
+          <li class="flex items-center justify-center p-4 bg-gray-100 rounded-lg">Cargando datos de ventas...</li>
+        </ul>
+      </div>
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+        <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] mb-4">Productos</h2>
+        <ul id="products-list" class="space-y-4 text-sm text-[#4A0C2B] max-h-96 overflow-y-auto">
+          <li class="flex items-center justify-center p-4 bg-gray-100 rounded-lg">Cargando datos de productos...</li>
+        </ul>
+      </div>
+      <div class="bg-white bg-opacity-90 rounded-xl shadow-lg p-6 border border-[#795548]">
+        <h2 class="text-2xl md:text-3xl font-bold text-[#4A0C2B] mb-4">Inventario</h2>
+        <ul id="inventory-list" class="space-y-4 text-sm text-[#4A0C2B] max-h-96 overflow-y-auto">
+          <li class="flex items-center justify-center p-4 bg-gray-100 rounded-lg">Cargando datos de inventario...</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/dashboard.js" defer></script>
+
+</body>
+</html>

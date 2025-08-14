@@ -1,31 +1,51 @@
 # app/database.py
-#
-# Archivo para manejar la conexión a la base de datos.
-# Utiliza psycopg2 y el módulo dotenv para cargar la URL de la base de datos desde el archivo .env.
 
 import os
 import psycopg2
+from psycopg2 import pool
 from dotenv import load_dotenv
+import logging
 
-# Carga las variables de entorno desde el archivo .env.
+# Carga las variables de entorno.
 load_dotenv()
 
-# Obtiene la URL de la base de datos desde las variables de entorno.
-SUPABASE_URL = os.getenv("SUPABASE_URL")
+# Variable global para almacenar el pool de conexiones.
+# Se inicializará al arrancar la aplicación.
+db_pool = None
+
+def init_db_pool():
+    """Inicializa el pool de conexiones a la base de datos."""
+    global db_pool
+    try:
+        db_pool = psycopg2.pool.SimpleConnectionPool(
+            minconn=1,
+            maxconn=10, # Puedes ajustar este número según la carga esperada
+            dsn=os.getenv("SUPABASE_URL")
+        )
+        logging.info("Pool de conexiones a la base de datos inicializado con éxito.")
+    except psycopg2.OperationalError as e:
+        logging.error(f"No se pudo conectar a la base de datos: {e}")
+        db_pool = None
+
+def close_db_pool():
+    """Cierra todas las conexiones en el pool."""
+    global db_pool
+    if db_pool:
+        db_pool.closeall()
+        logging.info("Pool de conexiones cerrado.")
 
 def get_db_connection():
     """
-    Establece una conexión con la base de datos PostgreSQL de Supabase.
-    
-    Raises:
-        ValueError: Si la variable de entorno SUPABASE_URL no está configurada.
-        
-    Returns:
-        psycopg2.extensions.connection: El objeto de conexión a la base de datos.
+    Obtiene una conexión del pool.
+    Esta función será usada como una dependencia de FastAPI.
     """
-    if not SUPABASE_URL:
-        raise ValueError("SUPABASE_URL no está configurada. Asegúrate de tener un archivo .env.")
+    if not db_pool:
+        raise HTTPException(status_code=503, detail="El servicio de base de datos no está disponible.")
     
-    # Intenta establecer la conexión.
-    conn = psycopg2.connect(SUPABASE_URL)
-    return conn
+    conn = None
+    try:
+        conn = db_pool.getconn()
+        yield conn
+    finally:
+        if conn:
+            db_pool.putconn(conn)
